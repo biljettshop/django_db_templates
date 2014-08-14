@@ -24,7 +24,7 @@ class DBLoader(BaseLoader):
             template = None
         if template is None:
             raise TemplateDoesNotExist()
-        return template.text.encode(settings.FILE_CHARSET), 'db_templates://%s' % template.pk
+        return template.source.encode(settings.FILE_CHARSET), 'db_templates://%s' % template.pk
     
     def load_template(self, template_name, template_dirs=None):
         source, origin = self.load_template_source(template_name, template_dirs)
