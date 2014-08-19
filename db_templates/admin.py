@@ -17,6 +17,9 @@ from django.conf import settings
 from django.conf.urls import url
 import io
 from db_templates.models import StaticFile
+from db_templates.forms import AddThemeAdminForm
+from django.core.files.base import File
+from django.core.files.uploadedfile import UploadedFile
 
 try:
     from django_ace import AceWidget
@@ -71,10 +74,20 @@ class TemplateInline(admin.TabularInline):
            url=reverse('admin:db_templates_template_change', args=(obj.pk,)),
            text=ugettext("Edit template"))
     get_edit_link.allow_tags = True
+
+class StaticFileInline(admin.TabularInline):
+    model = StaticFile
+    extra = 0
     
+class StaticFileAdmin(admin.ModelAdmin):
+    list_display = ('id', 'enabled', 'theme', 'path')
+admin.site.register(StaticFile, StaticFileAdmin)
+
 class ThemeAdmin(admin.ModelAdmin):
     list_display = ('id', 'enabled', 'name', 'get_download_link')
-    inlines = [TemplateInline]
+    inlines = [TemplateInline, StaticFileInline]
+    form = AddThemeAdminForm
+    save_on_top = True
     
     def get_urls(self):
         urls = super(ThemeAdmin, self).get_urls()
@@ -116,13 +129,25 @@ class ThemeAdmin(admin.ModelAdmin):
                 if static_file not in static_files:
                     z.writestr(filename, content)
                     static_files.append(static_file)
-        response = HttpResponse(mimetype="application/x-zip-compressed")
-        response['Content-Disposition'] = 'attachment; filename=%s-Theme.zip' % theme.name
+        response = HttpResponse(content_type="application/x-zip-compressed")
+        response['Content-Disposition'] = 'attachment; filename=%s_theme.zip' % theme.name.lower()
         response.write(s.getvalue())
         return response
-        
+    
+    def save_model(self, request, obj, form, change):
+        admin.ModelAdmin.save_model(self, request, obj, form, change)
+        if form.cleaned_data["zip_file"] is not None:
+            # Read the zip file and create template files
+            with zipfile.ZipFile(request.FILES['zip_file'], mode="r") as zip:
+                for name in zip.namelist():
+                    if name.startswith('templates/'):
+                        source = zip.open(name, "r").read()
+                        Template.objects.create(theme=obj,
+                                                path=name[10:],
+                                                source=source)
+                    if name.startswith('static/'):
+                        source = UploadedFile(zip.open(name, "r"))
+                        StaticFile.objects.create(theme=obj,
+                                                  path=name[7:],
+                                                  file=source)
 admin.site.register(Theme, ThemeAdmin)
-
-class StaticFileAdmin(admin.ModelAdmin):
-    list_display = ('id', 'enabled', 'theme', 'path')
-admin.site.register(StaticFile, StaticFileAdmin)

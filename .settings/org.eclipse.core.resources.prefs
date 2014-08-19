@@ -1,5 +1,6 @@
 eclipse.preferences.version=1
 encoding//db_templates/admin.py=utf-8
+encoding//db_templates/forms.py=utf-8
 encoding//db_templates/loaders.py=utf-8
 encoding//db_templates/models.py=utf-8
 encoding//db_templates/templatetags/db_templates_tags.py=utf-8
