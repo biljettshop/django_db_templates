@@ -5,11 +5,20 @@ Created on Aug 13, 2014
 @author: thomas
 '''
 from django.conf import settings
-from django.template.base import TemplateDoesNotExist, Template
-from django.template.loader import BaseLoader
+from django.template.base import TemplateDoesNotExist, Template, Origin,\
+    StringOrigin
+from django.template.loader import BaseLoader, LoaderOrigin, make_origin
 from django.utils._os import safe_join
 from . import models
 from django.utils.translation import ugettext
+
+class DBOrigin(LoaderOrigin):
+    def __init__(self, display_name, loader, name, dirs, source):
+        LoaderOrigin.__init__(self, display_name, loader, name, dirs)
+        self.source = source
+        
+    def reload(self):
+        return self.source
 
 class DBLoader(BaseLoader):
     is_usable = True
@@ -24,11 +33,16 @@ class DBLoader(BaseLoader):
             template = None
         if template is None:
             raise TemplateDoesNotExist()
-        return template.source.encode(settings.FILE_CHARSET), 'db_templates://%s' % template.pk
+        return template.source, 'db_templates://%s/%s/%s' % (template.pk, template.theme.name, template.path)
     
     def load_template(self, template_name, template_dirs=None):
         source, origin = self.load_template_source(template_name, template_dirs)
-        template = Template(source)
+        origin = DBOrigin(display_name=origin, 
+            loader=self,
+            name=template_name,
+            dirs=template_dirs, source=str(source))
+        
+        template = Template(source, origin=origin, name=template_name)
         return template, origin
         
     load_template_source.is_usable = True

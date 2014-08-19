@@ -6,18 +6,13 @@ Created on Aug 13, 2014
 '''
 from django.contrib import admin
 from .models import Theme, Template
-from codemirror.fields import CodeMirrorField, CodeMirrorFormField
 from codemirror.widgets import CodeMirrorTextarea
-from django.forms import widgets
-from django.forms.fields import CharField
 from django import forms, template
-from django.template.context import RequestContext
 from django.core.exceptions import ValidationError
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext, ugettext_lazy
 from django.http.response import HttpResponse
 import zipfile
-from _pyio import StringIO
 from django.conf import settings
 from django.conf.urls import url
 import io
@@ -38,6 +33,16 @@ class TemplateField(forms.fields.Field):
 class TemplateAdmin(admin.ModelAdmin):
     list_display = ('id', 'enabled', 'theme', 'position', 'path')
     save_on_top = True
+    save_as = True
+    search_fields = ('theme__name', 'path')
+    fieldsets = (
+                 (None, {
+                         "fields": (("theme", "enabled", "path", "position"),)
+                         }),
+                 (None, {
+                        "fields": ("source",)
+                        })
+                 )
 
     def formfield_for_dbfield(self, db_field, **kwargs):
         if db_field.name == 'source':
@@ -68,7 +73,7 @@ class ThemeAdmin(admin.ModelAdmin):
         my_urls = [
             url(r'^(?P<pk>\d+)/download-theme/$', 
                 self.admin_site.admin_view(self.download_theme),
-                name='download-theme')
+                name='download-theme'),
         ]
         return my_urls + urls
     
@@ -95,7 +100,7 @@ class ThemeAdmin(admin.ModelAdmin):
                     templates.append(template)
             static_files = []
             for static_file in theme.staticfile_set.filter(enabled=True):
-                filename = "static_files/{path}".format(
+                filename = "static/{path}".format(
                    path=static_file.path,
                    pk=static_file.pk,
                    enabled=static_file.enabled)

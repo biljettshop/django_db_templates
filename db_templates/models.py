@@ -9,6 +9,9 @@ from django.utils.translation import ugettext_lazy
 from codemirror.fields import CodeMirrorField
 from django.conf import settings
 from codemirror.widgets import CodeMirrorTextarea
+from django.dispatch.dispatcher import receiver
+from django.db.models.signals import post_save
+
 
 class Theme(models.Model):
     enabled = models.BooleanField(default=True, db_index=True)
@@ -29,15 +32,25 @@ class Template(models.Model):
     path = models.CharField(max_length=1024, db_index=True)
     position = models.IntegerField(default=0, db_index=True)
     if 'codemirror' in settings.INSTALLED_APPS:
-        source = CodeMirrorField()
+        source = CodeMirrorField(blank=True, default='')
     else:
-        source = models.TextField()
+        source = models.TextField(blank=True, default='')
     
     class Meta:
-        ordering = ('position', 'path')
+        ordering = ('theme', 'position', 'path')
         
     def __str__(self):
         return "{0}: {1}".format(self.theme, self.path)
+
+@receiver(post_save, sender=Template)
+def reset_cached_loader(sender, **kwargs):
+    """Resets the cached loader if it finds one in templace_source_loaders
+    """
+    from django.template.loader import template_source_loaders
+    from django.template.loaders.cached import Loader
+    for loader in template_source_loaders:
+        if isinstance(loader, Loader):
+            loader.reset()
 
 class StaticFile(models.Model):
     theme = models.ForeignKey(Theme)
