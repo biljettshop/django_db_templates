@@ -46,9 +46,15 @@ class TemplateAdmin(admin.ModelAdmin):
 
     def formfield_for_dbfield(self, db_field, **kwargs):
         if db_field.name == 'source':
-            return TemplateField(widget=CodeMirrorTextarea(
-               mode={"name": "jinja2"}
-            ))
+            try:
+                from django_ace import AceWidget
+                return TemplateField(widget=AceWidget(
+                       mode="django",
+                       width="100%",
+                       height="50vh",
+                ))
+            except:
+                pass
         return admin.TabularInline.formfield_for_dbfield(self, db_field, **kwargs)
 admin.site.register(Template, TemplateAdmin)
 

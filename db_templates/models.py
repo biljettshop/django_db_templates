@@ -6,9 +6,6 @@ Created on Aug 13, 2014
 '''
 from django.db import models
 from django.utils.translation import ugettext_lazy
-from codemirror.fields import CodeMirrorField
-from django.conf import settings
-from codemirror.widgets import CodeMirrorTextarea
 from django.dispatch.dispatcher import receiver
 from django.db.models.signals import post_save
 
@@ -31,10 +28,7 @@ class Template(models.Model):
     enabled = models.BooleanField(default=True, db_index=True)
     path = models.CharField(max_length=1024, db_index=True)
     position = models.IntegerField(default=0, db_index=True)
-    if 'codemirror' in settings.INSTALLED_APPS:
-        source = CodeMirrorField(blank=True, default='')
-    else:
-        source = models.TextField(blank=True, default='')
+    source = models.TextField(blank=True, default='')
     
     class Meta:
         ordering = ('theme', 'position', 'path')

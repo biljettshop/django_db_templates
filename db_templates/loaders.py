@@ -34,7 +34,8 @@ class DBLoader(BaseLoader):
         if template is None:
             raise TemplateDoesNotExist()
         return template.source, 'db_templates://%s/%s/%s' % (template.pk, template.theme.name, template.path)
-    
+    load_template_source.is_usable = True
+        
     def load_template(self, template_name, template_dirs=None):
         source, origin = self.load_template_source(template_name, template_dirs)
         origin = DBOrigin(display_name=origin, 
@@ -45,4 +46,3 @@ class DBLoader(BaseLoader):
         template = Template(source, origin=origin, name=template_name)
         return template, origin
         
-    load_template_source.is_usable = True
