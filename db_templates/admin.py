@@ -84,7 +84,7 @@ class StaticFileAdmin(admin.ModelAdmin):
 admin.site.register(StaticFile, StaticFileAdmin)
 
 class ThemeAdmin(admin.ModelAdmin):
-    list_display = ('id', 'enabled', 'name', 'get_download_link')
+    list_display = ('id', 'enabled', 'name', 'site', 'get_download_link')
     inlines = [TemplateInline, StaticFileInline]
     form = AddThemeAdminForm
     save_on_top = True

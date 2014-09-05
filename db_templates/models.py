@@ -8,6 +8,8 @@ from django.db import models
 from django.utils.translation import ugettext_lazy
 from django.dispatch.dispatcher import receiver
 from django.db.models.signals import post_save
+from django.contrib.sites.models import Site
+from django.contrib.sites.managers import CurrentSiteManager
 
 
 class Theme(models.Model):
@@ -16,6 +18,10 @@ class Theme(models.Model):
         verbose_name=ugettext_lazy("Name"),
         help_text=ugettext_lazy("Enter the theme's name."))
     position = models.IntegerField(default=0, db_index=True)
+    site = models.ForeignKey(Site, null=True, blank=True)
+    
+    objects = models.Manager()
+    on_site = CurrentSiteManager()
     
     class Meta:
         ordering = ('position', 'name')

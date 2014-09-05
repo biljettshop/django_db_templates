@@ -11,6 +11,8 @@ from django.template.loader import BaseLoader, LoaderOrigin, make_origin
 from django.utils._os import safe_join
 from . import models
 from django.utils.translation import ugettext
+from django.contrib.sites.models import Site
+from django.db.models import Q
 
 class DBOrigin(LoaderOrigin):
     def __init__(self, display_name, loader, name, dirs, source):
@@ -25,7 +27,9 @@ class DBLoader(BaseLoader):
     
     def load_template_source(self, template_name, template_dirs=None):
         try:
+            site = Site.objects.get_current()
             template = models.Template.objects.filter(
+                                 Q(theme__isnull=True) | Q(theme__site=site),
                                  enabled=True, 
                                  theme__enabled=True,
                                  path__exact=template_name).order_by('theme__position').first()
