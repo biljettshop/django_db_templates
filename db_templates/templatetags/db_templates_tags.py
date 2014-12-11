@@ -8,6 +8,7 @@ from django import template
 from db_templates.models import StaticFile
 from django.contrib.sites.models import Site
 from django.db.models import Q
+from db_templates.hooks import registry as hook_registry
 
 register = template.Library()
 
@@ -23,3 +24,7 @@ def db_templates_static_file(path):
         return obj.file.url
     except:
         return ''
+
+@register.simple_tag(takes_context=True)
+def hook(context, name, **kwargs):
+    return hook_registry.get_output(name, context, **kwargs)
